@@ -8,22 +8,38 @@
   outputs = { self, nixpkgs, utils, ... } @ inputs:
     utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
         python = pkgs.python38.withPackages (python-pkgs: with python-pkgs; [
           numpy
           decorator
           attrs
           psutil
           typed-ast
-          (scipy.overrideAttrs (old: { doCheck = false; }))
+          typing-extensions
+          (scipy.overrideAttrs (old: {
+            doCheck = false;
+            buildInputs = old.buildInputs ++ [ pkgs.libxcrypt ];
+          }))
           pytest
+          ipython
         ]);
-        dev-deps = (with pkgs; [ rnix-lsp clang-tools pyright cmake llvm ]) ++ [ python ];
+        dev-deps = (with pkgs; [
+          rnix-lsp
+          clang-tools
+          pyright
+
+          cmake
+          llvm
+          ninja
+
+          cudaPackages_11_8.cudatoolkit
+        ]) ++ [ python ];
       in
       {
         devShell = pkgs.mkShell {
           name = "r2n-devshell";
           buildInputs = dev-deps;
+          LD_LIBRARY_PATH = "${pkgs.cudaPackages_11_8.cudatoolkit.lib}/lib:/run/opengl-driver/lib";
         };
       });
 }
