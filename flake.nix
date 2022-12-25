@@ -26,6 +26,10 @@
             doCheck = false;
             buildInputs = old.buildInputs ++ [ pkgs.libxcrypt ];
           }))
+          (opencv4.overrideAttrs (old: {
+            doCheck = false;
+            buildInputs = old.buildInputs ++ [ pkgs.libxcrypt ];
+          }))
           pytest
           ipython
         ]);
